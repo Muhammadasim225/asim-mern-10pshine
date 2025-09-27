@@ -1,12 +1,14 @@
 const express=require('express');
 const dotenv=require('dotenv').config();
 const bodyParser=require('body-parser');
+const authRouter=require('./routes/authRoutes')
+const notesRouter=require('./routes/notesRoutes');
+
 const app=express();
 app.use(bodyParser.json())
-const authRouter=require('./routes/authRoutes')
-
 
 app.use("/user",authRouter)
+app.use("/user",notesRouter)
 
 
 
