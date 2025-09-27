@@ -6,6 +6,45 @@ const jwt=require('jsonwebtoken')
 const {body,validationResult}=require('express-validator')
 const nodemailer=require('nodemailer');
 const User=db.user
+const crypto=require('crypto');
+
+
+
+const sendResetPasswordMail=async(name,email,token)=>{
+  try{
+    const transporter=nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER, 
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+    const resetLink = `http://localhost:3000/user/reset-password?token=${token}`;
+
+
+    const mailOptions={
+      from:process.env.EMAIL_USER,
+      to:email,
+      subject:'For Reset Password',
+      html: `
+      <h3>Hello ${name},</h3>
+      <p>You requested to reset your password.</p>
+      <p>Click the link below to reset your password:</p>
+      <a href="${resetLink}" target="_blank">${resetLink}</a>
+      <p>This link will expire in 15 minutes.</p>
+    `,
+    }
+
+    const info = await transporter.sendMail(mailOptions)
+    console.log("Email sent: ", info.response)
+  }
+  catch (err) {
+    console.error("Send reset password mail error:", err);
+
+  }
+
+}
+
 
 const validationLogin = [
   body("email_address")
@@ -147,10 +186,52 @@ const signupUser=async(req,res)=>{
         }
       };
 
+      const forgetPassword=async(req,res)=>{
+        const {email_address}=req.body;
+        console.log("HAAN YEHI EMAIL HE:- ",email_address)
+        try{
+          const findEmail=await User.findOne({where:{
+            email_address
+          }})
+          console.log("Haan yehi find email he:- ",findEmail)
+          if(findEmail){
+            const token = crypto.randomBytes(32).toString("hex");
+            console.log("Haan yehi token he:- ",token)
+            const expiryTime = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+            findEmail.resetToken=token;
+            findEmail.resetTokenExpiry=expiryTime;
+
+
+            await findEmail.save();
+            sendResetPasswordMail(findEmail.full_name,findEmail.email_address,token)
+
+            return res.status(200).json({
+              success: true,
+              message: "Reset password email sent successfully",
+            });
+
+          }
+          else{
+            res.status(404).json({message:"This email does not exists"})
+          }
+
+        }
+        catch (err) {
+          console.error("Error on froget the password:", err);
+          return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+          });
+        }
+      }
+
+
 
 
 
   
 
-module.exports={signupUser,loginUser,
+module.exports={signupUser,loginUser,  forgetPassword,
+
   validationRegistration,validationLogin}
