@@ -18,4 +18,5 @@ const notesLimiter=rateLimit({
 
 router.post("/create-note",notesLimiter,protectedRoutes,createNotes)
 
+
 module.exports = router;
