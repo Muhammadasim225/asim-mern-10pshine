@@ -28,6 +28,11 @@ module.exports=(sequelize,DataTypes)=>{
             allowNull: true,
             unique: true,
           },
+          facebookId:{
+            type:DataTypes.STRING,
+            allowNull: true,
+            unique: true,
+          },
           avatar:{
             type:DataTypes.STRING,
             allowNull: true,
