@@ -225,6 +225,55 @@ const signupUser=async(req,res)=>{
           });
         }
       }
+      const resetPassword=async(req,res)=>{
+        try{
+          const token=req.query.token;
+          console.log("Haan yehi query he:- ",token)
+          const findToken=await User.findOne({where:{resetToken:token}})
+          console.log("Haan yehi find token he:- ",findToken)
+          if(findToken){
+
+            const password=req.body.password;
+            console.log("The password is:- ",password);
+            const hashedPassword=await bcrypt.hash(password,10)
+            console.log("The hashed password is:- ",hashedPassword);
+
+            await User.update(
+              {
+                password: hashedPassword,
+                resetToken: "",
+                resetTokenExpiry: null,
+              },
+              {
+                where: { id: findToken.id },
+              }
+            );
+            
+            const updatedUser = await User.findByPk(findToken.id); 
+            console.log("Haan yehi updated user he:- ",updatedUser)
+            res.status(200).json({ message: "Password has been reset", data: updatedUser });
+
+
+
+          }
+          else{
+              res.status(404).json({message:"This token does not exists"})
+            
+
+          }
+
+        }
+        catch (err) {
+          console.error("Error on reset the password:", err);
+          return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+          });
+        }
+
+
+      }
+
 
 
 
@@ -233,5 +282,6 @@ const signupUser=async(req,res)=>{
   
 
 module.exports={signupUser,loginUser,  forgetPassword,
+  resetPassword,
 
   validationRegistration,validationLogin}
