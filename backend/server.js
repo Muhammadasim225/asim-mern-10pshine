@@ -1,7 +1,6 @@
 const express=require('express');
 const dotenv=require('dotenv').config();
 const bodyParser=require('body-parser');
-// const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const session=require('express-session')
 const app=express();
 app.use(bodyParser.json())
