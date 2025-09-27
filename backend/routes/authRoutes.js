@@ -1,5 +1,5 @@
 const express=require('express');
-const { signupUser,validationRegistration,} = require('../controllers/authController');
+const {  signupUser,validationRegistration,validationLogin, loginUser} = require('../controllers/authController');
 const rateLimit=require('express-rate-limit')
 
 const router=express.Router();
@@ -14,6 +14,7 @@ const limiter=rateLimit({
 });
 
 router.post("/create-account",limiter,validationRegistration,signupUser)
+router.post("/login-account",limiter,validationLogin,loginUser)
 
 
 module.exports = router;
