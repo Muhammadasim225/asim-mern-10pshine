@@ -19,7 +19,31 @@ const createNotes = async (req, res) => {
       res.status(500).json({ success: false, message: "Internal Server Error" });
     }
   };
+
+  const fetchAllNotes=async(req,res)=>{
+    try{
+        const getAll=await Note.findAll({})
+        if(getAll.length>0){
+            res.status(200).json({message:"All Notes Fetched successfully",data:getAll})
+
+        }
+        else{
+            res.status(200).json({
+                "success": true,
+                "message": "No notes found",
+                "data": []
+              })
+        }
+
+
+    }
+    catch (err) {
+        res.status(500).json({ success: false, message: "Internal Server Error" });
+      }
+
+  }
+
   
 
-module.exports={createNotes}
+module.exports={createNotes,fetchAllNotes}
   

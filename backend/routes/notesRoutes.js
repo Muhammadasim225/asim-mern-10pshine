@@ -1,6 +1,6 @@
 const express=require('express');
 const { protectedRoutes } = require('../middlewares/protectedRoutes');
-const { createNotes} = require('../controllers/notesController');
+const { createNotes,fetchAllNotes} = require('../controllers/notesController');
 const rateLimit=require('express-rate-limit')
 
 const router=express.Router();
@@ -15,8 +15,8 @@ const notesLimiter=rateLimit({
 });
 
 
-
 router.post("/create-note",notesLimiter,protectedRoutes,createNotes)
+router.get("/fetch-all-notes",protectedRoutes,fetchAllNotes)
 
 
 module.exports = router;
