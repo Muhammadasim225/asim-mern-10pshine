@@ -3,9 +3,12 @@ const dotenv=require('dotenv').config();
 const bodyParser=require('body-parser');
 const authRouter=require('./routes/authRoutes')
 const notesRouter=require('./routes/notesRoutes');
+const cookieParser = require('cookie-parser');
 
 const app=express();
+app.use(cookieParser());
 app.use(bodyParser.json())
+
 
 app.use("/user",authRouter)
 app.use("/user",notesRouter)
