@@ -43,7 +43,52 @@ const createNotes = async (req, res) => {
 
   }
 
+  const updateNote = async (req, res) => {
+    try {
+      const { title, content } = req.body;
+      const id = req.params.id;      
+      const userId = req.user.id;        
+  
+      if (!title || !content) {
+        return res.status(400).json({
+          success: false,
+          message: "Title and content are required",
+        });
+      }
+  
+      const note = await Note.findOne({
+        where: {
+          id,
+          userId: userId, 
+        },
+      });
+  
+      if (!note) {
+        return res.status(404).json({
+          success: false,
+          message: "Note not found or you're not authorized to edit this note",
+        });
+      }
+  
+      await note.update({ title, content });
+  
+      return res.status(200).json({
+        success: true,
+        message: "Note updated successfully",
+        data: note,
+      });
+  
+    } catch (err) {
+      console.error("Update note error:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Internal Server Error",
+      });
+    }
+  };
+
+
   
 
-module.exports={createNotes,fetchAllNotes}
+module.exports={createNotes,fetchAllNotes,updateNote}
   
