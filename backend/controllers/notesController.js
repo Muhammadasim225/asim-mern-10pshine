@@ -34,8 +34,6 @@ const createNotes = async (req, res) => {
                 "data": []
               })
         }
-
-
     }
     catch (err) {
         res.status(500).json({ success: false, message: "Internal Server Error" });
@@ -87,8 +85,33 @@ const createNotes = async (req, res) => {
     }
   };
 
+  const deleteNote=async(req,res)=>{
+    const id=req.params.id;
+    try{
+      const delNote=await Note.findOne({
+        where:{
+          id
+        }
+      })
+      if(!delNote){
+        res.status(404).json({message:"Note not found of this ID"});
+      }
+      else{
+        await delNote.destroy();
+        res.status(200).json({message:`Note deleted successfully of this ID-${id}`})
+      }
+    }
+    catch (err) {
+      console.error("Delete note error:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Internal Server Error",
+      });
+    }
+  }
+
 
   
 
-module.exports={createNotes,fetchAllNotes,updateNote}
+module.exports={createNotes,fetchAllNotes,updateNote, deleteNote}
   
