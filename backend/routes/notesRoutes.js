@@ -1,6 +1,6 @@
 const express=require('express');
 const { protectedRoutes } = require('../middlewares/protectedRoutes');
-const { createNotes,fetchAllNotes, deleteNote,updateNote} = require('../controllers/notesController');
+const { createNotes,getSingleNote,fetchAllNotes, deleteNote,updateNote} = require('../controllers/notesController');
 const rateLimit=require('express-rate-limit')
 
 const router=express.Router();
@@ -28,5 +28,7 @@ router.post("/create-note",notesLimiter,protectedRoutes,createNotes)
 router.get("/fetch-all-notes",protectedRoutes,fetchAllNotes)
 router.put("/edit-note/:id",editnotesLimiter,protectedRoutes,updateNote)
 router.delete("/remove-note/:id",protectedRoutes,deleteNote)
+router.get("/get-single-note/:id",protectedRoutes,getSingleNote)
+
 
 module.exports = router;
