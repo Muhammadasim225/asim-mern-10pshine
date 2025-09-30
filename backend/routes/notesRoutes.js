@@ -30,5 +30,4 @@ router.put("/edit-note/:id",editnotesLimiter,protectedRoutes,updateNote)
 router.delete("/remove-note/:id",protectedRoutes,deleteNote)
 router.get("/get-single-note/:id",protectedRoutes,getSingleNote)
 
-
 module.exports = router;
