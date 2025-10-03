@@ -1,5 +1,6 @@
 const db=require('../config/database')
 const Note=db.notes
+const User=db.user
 
 
 const createNotes = async (req, res) => {
@@ -111,7 +112,45 @@ const createNotes = async (req, res) => {
   }
 
 
+  const getSingleNote = async (req, res) => {
+    try {
+      const id = req.params.id;
+      const userId = req.user.id;
+  
+      const getOneNote = await Note.findOne({
+        where: {
+          id,
+          userId: userId, 
+        },
+        include:[{
+            model:User,
+            as:'user',
+            attributes:['full_name','email_address'],
+        }],
+
+      });
+  
+      if (!getOneNote) {
+        return res.status(404).json({ message: "Note not available of this ID" });
+      }
+  
+      return res.status(200).json({
+        message: `Note of ID ${id} fetched successfully`,
+        data: getOneNote,
+      });
+  
+    } catch (err) {
+      console.error("Fetch single note error:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Internal Server Error",
+      });
+    }
+  };
+
+
+
   
 
-module.exports={createNotes,fetchAllNotes,updateNote, deleteNote}
+module.exports={createNotes,fetchAllNotes,updateNote,getSingleNote, deleteNote}
   
