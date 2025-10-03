@@ -1,5 +1,5 @@
 const express=require('express');
-const {  signupUser,validationRegistration,deleteAccount,logoutUser,resetPassword,forgetPassword,validationLogin, loginUser} = require('../controllers/authController');
+const {  signupUser,validationRegistration,deleteAccount,logoutUser,resetPassword,forgetPassword,validationLogin,updateUserProfile, loginUser} = require('../controllers/authController');
 const rateLimit=require('express-rate-limit');
 const { protectedRoutes } = require('../middlewares/protectedRoutes');
 
@@ -20,7 +20,7 @@ router.post('/forget-password',forgetPassword)
 router.get("/reset-password",resetPassword)
 router.post('/logout', logoutUser);
 router.delete('/delete-account',protectedRoutes,deleteAccount)
-
+router.put("/update-profile",protectedRoutes,updateUserProfile)
 
 
 

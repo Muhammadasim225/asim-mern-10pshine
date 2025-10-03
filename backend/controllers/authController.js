@@ -362,5 +362,5 @@ const signupUser=async(req,res)=>{
 
   
 
-module.exports={signupUser,loginUser, deleteAccount, forgetPassword,
+module.exports={signupUser,loginUser, deleteAccount,updateUserProfile,forgetPassword,
   resetPassword, logoutUser,validationRegistration,validationLogin}
