@@ -1,6 +1,6 @@
 const express=require('express');
 const { protectedRoutes } = require('../middlewares/protectedRoutes');
-const { createNotes} = require('../controllers/notesController');
+const { createNotes,getSingleNote,fetchAllNotes, deleteNote,updateNote} = require('../controllers/notesController');
 const rateLimit=require('express-rate-limit')
 
 const router=express.Router();
@@ -14,9 +14,20 @@ const notesLimiter=rateLimit({
   },
 });
 
+const editnotesLimiter=rateLimit({
+  windowMs: 15 * 60 * 1000, 
+   max: 10,
+   message: {
+     success: false,
+     message: "Too many notes edited, please slow down",
+   },
+ });
 
 
 router.post("/create-note",notesLimiter,protectedRoutes,createNotes)
-
+router.get("/fetch-all-notes",protectedRoutes,fetchAllNotes)
+router.put("/edit-note/:id",editnotesLimiter,protectedRoutes,updateNote)
+router.delete("/remove-note/:id",protectedRoutes,deleteNote)
+router.get("/get-single-note/:id",protectedRoutes,getSingleNote)
 
 module.exports = router;
