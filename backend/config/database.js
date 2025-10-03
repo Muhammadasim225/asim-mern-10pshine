@@ -17,6 +17,7 @@ db.Sequelize=Sequelize
 db.sequelize=sequelize
 
 db.user=require('../models/user.model')(sequelize,DataTypes)
+db.notes=require('../models/note.model')(sequelize,DataTypes)
 
 
 Object.keys(db).forEach(modelName => {
@@ -26,7 +27,7 @@ Object.keys(db).forEach(modelName => {
 });
 
 
-db.sequelize.sync({force: true});
+db.sequelize.sync({force: false});
 
 
 module.exports=db;
