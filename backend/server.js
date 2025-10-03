@@ -13,6 +13,10 @@ const authRouter=require('./routes/authRoutes')
 const notesRouter=require('./routes/notesRoutes');
 const logger = require('./logs/logging');
 const cookieParser = require('cookie-parser');
+const multer = require('multer');
+const path=require('path');
+
+app.use("/uploads", express.static(path.join(process.cwd(), "/uploads/")));
 
 
 app.use(cookieParser());
