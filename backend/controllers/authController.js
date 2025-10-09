@@ -329,6 +329,30 @@ const signupUser=async(req,res)=>{
         
       }
       
+      const deleteAccount=async(req,res)=>{
+        const userId = req.user.id;        
+ 
+        try{
+          const delAccount=await User.findOne({where:{
+            id:userId
+          }});
+          if(!delAccount){
+            res.status(400).send("Error 400 status code");
+          }
+          else{
+            await delAccount.destroy();
+            res.status(200).send("User-Account deleted successfully")
+          }
+
+        }
+        catch (err) {
+          console.error("Error on reset the password:", err);
+          return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+          });
+        }
+      }
       
 
 
@@ -338,5 +362,5 @@ const signupUser=async(req,res)=>{
 
   
 
-module.exports={signupUser,loginUser,updateUserProfile,  forgetPassword,
+module.exports={signupUser,loginUser, deleteAccount, forgetPassword,
   resetPassword, logoutUser,validationRegistration,validationLogin}
