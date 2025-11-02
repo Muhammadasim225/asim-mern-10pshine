@@ -3,6 +3,7 @@
     "bcryptjs": "^3.0.2",
     "body-parser": "^2.2.0",
     "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
@@ -20,6 +21,17 @@
     "path": "^0.12.7",
     "pino": "^9.11.0",
     "pino-pretty": "^13.1.1",
-    "sequelize": "^6.37.7"
-  }
+    "sequelize": "^6.37.7",
+    "sinon": "^21.0.0"
+  },
+  "devDependencies": {
+    "chai": "^4.3.10",
+    "chai-http": "^4.4.0",
+    "mocha": "^11.7.4",
+    "supertest": "^7.1.4"
+  },
+"scripts": {
+  "test": "mocha tests --timeout 15000",
+  "test:watch": "mocha tests --watch --timeout 15000"
+}
 }

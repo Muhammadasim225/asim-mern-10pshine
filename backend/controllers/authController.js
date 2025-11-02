@@ -7,6 +7,7 @@ const {body,validationResult}=require('express-validator')
 const nodemailer=require('nodemailer');
 const User=db.user
 const crypto=require('crypto');
+const logger = require('../logs/logging');
 
 
 
@@ -19,8 +20,12 @@ const sendResetPasswordMail=async(name,email,token)=>{
         pass: process.env.EMAIL_PASS,
       },
     });
-    const resetLink = `http://localhost:3000/user/reset-password?token=${token}`;
 
+    logger.info(
+      { action: 'email_transporter_created', service: 'gmail' },
+      'Email transporter created successfully'
+    );
+        const resetLink = `http://localhost:5173/reset-password?token=${token}`;
 
     const mailOptions={
       from:process.env.EMAIL_USER,
@@ -36,11 +41,10 @@ const sendResetPasswordMail=async(name,email,token)=>{
     }
 
     const info = await transporter.sendMail(mailOptions)
-    console.log("Email sent: ", info.response)
+    logger.info({action:"email_sent",response:info.response})
   }
   catch (err) {
-    console.error("Send reset password mail error:", err);
-
+    logger.error({action:"reset_password_mail_error",errorMessage:err.message},"Send reset password mail error")
   }
 
 }
@@ -78,8 +82,8 @@ const validationRegistration = [
     body("password")
       .notEmpty()
       .withMessage("Password is required")
-      .isLength({ min: 6, max: 24 })
-      .withMessage("Password must be between 6 and 12 characters long"),
+      .isLength({ min: 6, max: 30 })
+      .withMessage("Password must be between 6 and 30 characters long"),
   ];
 
 
@@ -88,7 +92,18 @@ const signupUser=async(req,res)=>{
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({
+      logger.info(
+        {
+          action: "validation_failed",
+          validationErrors: errors.array().map(err => ({
+            field: err.param,
+            message: err.msg
+          }))
+        },
+        "Request validation failed"
+      );
+      
+        return res.status(400).json({
         success: false,
         errors: errors.array(),
       });
@@ -97,17 +112,22 @@ const signupUser=async(req,res)=>{
         try {
           const { full_name, email_address, password } = req.body;
           const hashedPassword=await bcrypt.hash(password,10)
-      
-          // Check if email already exists
+          logger.info({action:"hashed_password"},"Password hashed successfully")
+          logger.info({ action: "check_existing_user", email_address }, "Checking if user already exists");
           const existingUser = await User.findOne({ where: { email_address } });
           if (existingUser) {
+            logger.info({action:"yes_exist_user",user:existingUser.id},"Yes, user exist in the database")
             return res.status(400).json({
               success: false,
               message: "Email already registered",
             });
           }
-      
+          logger.warn({action:"not_exist_user"},"No, user not exist in the database")
+
+          logger.info({action:"attempting_to_create_new_user"},"Start attmept to create new user")
+
           const newUser = await User.create({ full_name, email_address, password:hashedPassword });
+          logger.info({action:"created_user_success",userId:newUser.id},"User created successfully")
       
           res.status(201).json({
             success: true,
@@ -119,7 +139,7 @@ const signupUser=async(req,res)=>{
             },
           });
         } catch (err) {
-          console.error("Signup error:", err);
+          logger.error({action:"signup_error",error:err.message,stack:err.stack},"Signup Error")
           return res.status(500).json({
             success: false,
             message: "Internal Server Error",
@@ -129,23 +149,34 @@ const signupUser=async(req,res)=>{
 
       
       const loginUser = async (req, res) => {
+        logger.info({ userEmail: req.body.email_address }, 'User login attempt');
+        
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
+          logger.warn({
+            userEmail: req.body.email_address,
+            errorCount: errors.array().length,
+            validationErrors: errors.array()
+          }, "Login Validation Failed");
+          
           return res.status(400).json({
             success: false,
             errors: errors.array(),
           });
         }
-
       
         try {
           const { email_address, password } = req.body;
       
+          // Email ko lowercase mein convert karo for consistency
+          const normalizedEmail = email_address.toLowerCase().trim();
+      
           const existingUser = await User.findOne({
-            where: { email_address }
+            where: { email_address: normalizedEmail }
           });
       
           if (!existingUser) {
+            logger.warn({ userEmail: normalizedEmail }, 'User not found during login');
             return res.status(404).json({
               success: false,
               message: "User not registered"
@@ -154,6 +185,10 @@ const signupUser=async(req,res)=>{
       
           const isMatch = await bcrypt.compare(password, existingUser.password);
           if (!isMatch) {
+            logger.warn({ 
+              userId: existingUser.id, 
+              userEmail: normalizedEmail 
+            }, 'Invalid password attempt');
             return res.status(401).json({
               success: false,
               message: "Invalid credentials"
@@ -161,18 +196,28 @@ const signupUser=async(req,res)=>{
           }
       
           const token = jwt.sign(
-            { id: existingUser.id, email: existingUser.email_address },
+            { 
+              id: existingUser.id, 
+              email_address: existingUser.email_address,   
+              avatar: existingUser?.avatar,      
+              full_name: existingUser.full_name
+            },
             process.env.JWT_SECRET_KEY,
             { expiresIn: '1h' }
           );
-
+      
           res.cookie('token', token, {
             httpOnly: true,
-            // secure: process.env.NODE_ENV === 'production', 
-            secure:true,
-            sameSite: 'strict',
-            maxAge: 60 * 60 * 1000 
+            secure: process.env.NODE_ENV === 'production', // Production mein true rakho
+            sameSite: 'lax', 
+            maxAge: 60 * 60 * 1000,
           });
+      
+          logger.info({ 
+            userId: existingUser.id, 
+            userEmail: existingUser.email_address, 
+            fullName: existingUser.full_name 
+          }, 'User logged in successfully');
       
           return res.status(200).json({
             success: true,
@@ -181,12 +226,18 @@ const signupUser=async(req,res)=>{
               id: existingUser.id,
               full_name: existingUser.full_name,
               email_address: existingUser.email_address,
+              avatar: existingUser.avatar
             },
-            token,
+            token, // Frontend ke liye bhi token bhej rahe hain
           });
       
         } catch (err) {
-          console.error("Login error:", err);
+          logger.error({ 
+            userEmail: req.body.email_address, 
+            error: err.message, 
+            stack: err.stack 
+          }, 'Login process failed');
+          
           return res.status(500).json({
             success: false,
             message: "Internal Server Error",
@@ -195,24 +246,25 @@ const signupUser=async(req,res)=>{
       };
 
       const forgetPassword=async(req,res)=>{
+        logger.info({userEmail:req.body.email_address},"User attempt to forget the password")
         const {email_address}=req.body;
-        console.log("HAAN YEHI EMAIL HE:- ",email_address)
+        logger.info({userEmail:req.body.email_address},"User forget password attempt started")
         try{
           const findEmail=await User.findOne({where:{
             email_address
           }})
-          console.log("Haan yehi find email he:- ",findEmail)
+          logger.info({userEmail:findEmail},"Attempt to start find User Email from db")
           if(findEmail){
             const token = crypto.randomBytes(32).toString("hex");
-            console.log("Haan yehi token he:- ",token)
-            const expiryTime = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
-
+            logger.info({tokenPrefix:token.substring(0,8)},"Token generated successfully for user")
+            const expiryTime = new Date(Date.now() + 15 * 60 * 1000); 
             findEmail.resetToken=token;
             findEmail.resetTokenExpiry=expiryTime;
 
 
             await findEmail.save();
             sendResetPasswordMail(findEmail.full_name,findEmail.email_address,token)
+            logger.info({userEmail:findEmail.email_address,fullName:findEmail.full_name},"Successfully forgot the password")
 
             return res.status(200).json({
               success: true,
@@ -221,12 +273,14 @@ const signupUser=async(req,res)=>{
 
           }
           else{
+            logger.warn({userEmail:findEmail},"User not found of this email address")
             res.status(404).json({message:"This email does not exists"})
+            
           }
 
         }
         catch (err) {
-          console.error("Error on froget the password:", err);
+          logger.error({userEmail:req.body.email_address,stack:err.stack,error:err.message},"Error on forget the password:");
           return res.status(500).json({
             success: false,
             message: "Internal Server Error",
@@ -234,17 +288,27 @@ const signupUser=async(req,res)=>{
         }
       }
       const resetPassword=async(req,res)=>{
+        const token=req.query.token;
+        if (!token) {
+          logger.warn({ action: 'password_reset' }, "No token provided in query params");
+          return res.status(400).json({ success: false, message: "Token is required" });
+        }
         try{
-          const token=req.query.token;
-          console.log("Haan yehi query he:- ",token)
+          logger.info(
+            { 
+              tokenPrefix: token.substring(0, 8) + '...', 
+              tokenLength: token.length,                 
+              action: 'password_reset_attempt'            
+            }, 
+            "Password reset token received and processing started"
+          );
           const findToken=await User.findOne({where:{resetToken:token}})
-          console.log("Haan yehi find token he:- ",findToken)
           if(findToken){
-
+            logger.info({tokenPrefix:findToken.resetToken.substring(0,8)+"...",action: 'password_reset'},"Token we found in db")
             const password=req.body.password;
-            console.log("The password is:- ",password);
+            logger.info({ action: 'password_received' }, "Password received in request body");
             const hashedPassword=await bcrypt.hash(password,10)
-            console.log("The hashed password is:- ",hashedPassword);
+            logger.info({ action: 'password_hashed' }, "Password successfully hashed");
 
             await User.update(
               {
@@ -258,21 +322,26 @@ const signupUser=async(req,res)=>{
             );
             
             const updatedUser = await User.findByPk(findToken.id); 
-            console.log("Haan yehi updated user he:- ",updatedUser)
+            logger.info({ userId: updatedUser.id, action: 'password_reset_complete' }, "User password has been updated");
             res.status(200).json({ message: "Password has been reset", data: updatedUser });
 
 
 
           }
           else{
-              res.status(404).json({message:"This token does not exists"})
+            logger.warn({ action: 'password_reset' }, "No token provided in query params");
+            res.status(404).json({message:"This token does not exists"})
             
 
           }
 
         }
         catch (err) {
-          console.error("Error on reset the password:", err);
+          logger.error({ 
+            tokenPrefix: token.substring(0, 8) + '...', 
+            error: err.message, 
+            stack: err.stack 
+          }, "Database search for reset token failed");
           return res.status(500).json({
             success: false,
             message: "Internal Server Error",
@@ -288,6 +357,7 @@ const signupUser=async(req,res)=>{
           // secure: process.env.NODE_ENV === 'production',
           sameSite: 'strict',
         });
+        logger.info(`User logged out: ${req.user?.id || 'Unknown user'}`)
         res.status(200).json({ message: 'Logged out successfully' });
       };
 
@@ -297,7 +367,8 @@ const signupUser=async(req,res)=>{
           const { full_name, email_address } = req.body;
           const user = await User.findByPk(userId);
           if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+            logger.warn({action:"not_found"},"User not found")
+      return res.status(404).json(user);
     }
     else{
       if(full_name!==undefined){
@@ -313,13 +384,17 @@ const signupUser=async(req,res)=>{
       }
 
       await user.save();
-
-      return res.status(200).json({ success: true, message: "Profile updated", user });
-      
+      const newToken = generateToken(user);
+      logger.info({action:"generated_token"},"User profile updated successfully") 
+      return res
+      .status(200)
+      .cookie('token', newToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production' })  // Update cookie
+      .json({ success: true, message: "Profile updated", user });      
     }
 
         }
         catch (err) {
+          logger.warn({action:"error_updating_profile",error:err.message,stack:err.stack},"Error on updating a user profile")
           console.error("Error on updating a profile:", err);
           return res.status(500).json({
             success: false,
@@ -328,25 +403,44 @@ const signupUser=async(req,res)=>{
         }
         
       }
+
+      const generateToken = (user) => {
+        logger.info({action:"generated_token"},"Token generated successfully")
+        return jwt.sign(
+          { id: user.id, full_name: user.full_name, email_address: user.email_address, avatar: user.avatar },
+          process.env.JWT_SECRET_KEY,
+          { expiresIn: '7d' }  
+        );
+      };
+      
       
       const deleteAccount=async(req,res)=>{
-        const userId = req.user.id;        
+        const userId = req.user.id;
+        if(!userId){
+          logger.info({action:"user_no_loggedin"},"User not logged in")
+          return res.status(401).json({ success: false, message: "Unauthorized" }); 
+        }
+              
  
         try{
           const delAccount=await User.findOne({where:{
             id:userId
           }});
           if(!delAccount){
-            res.status(400).send("Error 400 status code");
+            logger.warn({action:"not_found"},"User not found")
+            return res.status(404).json({ success: false, message: "User not found" }); 
           }
           else{
             await delAccount.destroy();
-            res.status(200).send("User-Account deleted successfully")
-          }
-
-        }
+            logger.info({action:"success",delAccount:delAccount})
+            res.status(200).json({
+              success: true,
+              message: "Account deleted successfully"
+            })
+                    }
+      }
         catch (err) {
-          console.error("Error on reset the password:", err);
+          logger.warn({action:"error_delete_account",error:err.message,stack:err.stack},"Error on deleting a user ")
           return res.status(500).json({
             success: false,
             message: "Internal Server Error",
@@ -354,6 +448,7 @@ const signupUser=async(req,res)=>{
         }
       }
       
+    
 
 
 

@@ -1,4 +1,5 @@
 const { Sequelize , DataTypes} = require('sequelize');
+const logger = require('../logs/logging');
 const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USERNAME, process.env.DB_PASSWORD, {
     host: process.env.DB_HOST,
     dialect: 'mysql',
@@ -7,9 +8,9 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USERNAME, pr
 
   try {
     sequelize.authenticate();
-    console.log('Connection has been established successfully.');
+    logger.info({action:"connect_db_success"},'Connection has been established successfully.');
   } catch (error) {
-    console.error('Unable to connect to the database:', error);
+    logger.error({action:"error_connect_db",error:error.message},'Unable to connect to the database:');
   }
 
   const db={}
@@ -27,7 +28,12 @@ Object.keys(db).forEach(modelName => {
 });
 
 
-db.sequelize.sync({force: false});
+db.sequelize.sync({force: false}).then(() => {
+  logger.info({ action: 'db_sync_success' }, 'Database synchronized successfully.');
+}) .catch((err) => {
+  logger.error({ action: 'db_sync_failed', error: err.message, stack: err.stack }, 'Database sync failed.');
+});
+
 
 
 module.exports=db;
