@@ -1,6 +1,6 @@
 import ResetPassword from "../../components/ResetPassword";
 import { forgetPassword, loginAccount, resetPassword } from "../authSlice";
-
+import { createAccount } from "../authSlice";
 beforeEach(() => {
   global.fetch = jest.fn();
 });
@@ -155,6 +155,55 @@ expect(fetch).toHaveBeenCalledWith(
 );
 expect(result.type).toBe("auth/resetPassword/fulfilled");
 expect(result.payload).toEqual(fakeResponse);
+
+  })
+})
+
+
+
+describe("Signup account  async thunk",()=>{
+  test("dispatches fulfilled when  create account executes",async()=>{
+
+    const fakeResponse={
+      "success": true,
+      "message": "Account registered successfully",
+      "user": {
+          "id": "fbfbd0c5-3393-437c-a6b9-7628d250d032",
+          "full_name": "Bilal Chohan",
+          "email_address": "bilalchohna123@gmail.com"
+      }
+  }
+
+  global.fetch.mockResolvedValueOnce({
+    ok: true,
+    json: async () => fakeResponse,
+  });
+
+  const dispatch = jest.fn();
+  const getState = jest.fn();
+
+  const data = {
+    full_name: "Bilal Chohan",
+    email_address: "bilalchohna123@gmail.com",
+    password: "asim098",
+  };
+
+  const thunk = createAccount(data);
+  const result = await thunk(dispatch, getState, undefined);
+
+  // Check fetch called with correct arguments
+  expect(fetch).toHaveBeenCalledWith(
+    "http://localhost:5000/user/create-account",
+    expect.objectContaining({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    })
+  );
+
+  // Check thunk result
+  expect(result.type).toBe("createAccount/fulfilled");
+  expect(result.payload).toEqual(fakeResponse);
 
   })
 })

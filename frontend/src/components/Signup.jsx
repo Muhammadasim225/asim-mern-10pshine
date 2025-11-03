@@ -75,6 +75,7 @@ export default function Signup() {
       email_address: form.email_address,
       password: form.password 
     }));
+    navigate("/login")
   };
 
   return (

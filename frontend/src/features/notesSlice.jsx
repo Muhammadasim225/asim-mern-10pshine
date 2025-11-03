@@ -16,8 +16,7 @@ export const createNote=createAsyncThunk("createNote",async(data,{rejectWithValu
   })
 
   if (!response.ok) {
-    // If server error (4xx/5xx), try to parse error JSON, else use status text
-    const errorData = await response.text();  // Use .text() first to avoid json() fail
+    const errorData = await response.text(); 
     let errorMsg;
     try {
       const parsedError = JSON.parse(errorData);
