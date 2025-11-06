@@ -1,4 +1,4 @@
-# Notes App — MERN Stack (Authentication, CRUD, Redux Toolkit, Mocha Chai, Jest, SonarQube Integration)
+# Notes App — MERN Stack 
 
 A full-stack **MERN Notes App** with secure authentication, robust error-handling, protected APIs ,state management using redux tolkit, and complete **SonarQube Code Quality Integration**. This project demonstrates real-world production-level architecture, clean folder structure, reusable components, and scalable backend design.
 
@@ -343,8 +343,6 @@ npm run dev
 <img width="941" height="434" alt="fourth" src="https://github.com/user-attachments/assets/74b44a4a-e773-432e-b9c7-4639692179b9" />
 <img width="940" height="440" alt="fifth" src="https://github.com/user-attachments/assets/7cbec57c-0573-4491-bf98-d70fd657df4c" />
 <img width="664" height="438" alt="sixth" src="https://github.com/user-attachments/assets/dcc53279-4dce-430b-acf4-f26e2f7fd5e6" />
-![sonar-project-analalysis_page-0001](https://github.com/user-attachments/assets/14fb85c9-a3c2-42b6-81a9-eae37bd90cd4)
-
 
 🧠 Learning Outcomes
 Secure MERN authentication
