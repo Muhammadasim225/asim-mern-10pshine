@@ -7,7 +7,7 @@ const User=db.user;
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: "http://localhost:3000/auth/google/callback"
+  callbackURL: `http://localhost:5000/auth/google/callback`
 },
 async (accessToken, refreshToken, profile, cb) => {
   try {
@@ -45,23 +45,21 @@ async (accessToken, refreshToken, profile, cb) => {
 ));
 
 
+// config/passport.js - Facebook Strategy
 passport.use(new FacebookStrategy({
   clientID: process.env.FACEBOOK_APP_ID,
   clientSecret: process.env.FACEBOOK_APP_SECRET,
-  callbackURL: "http://localhost:3000/auth/facebook/callback",
+  callbackURL: `http://localhost:5000/auth/facebook/callback`,
   profileFields: ['id', 'displayName', 'photos', 'email']
 },
 async function(accessToken, refreshToken, profile, cb) {
   try {
-    // First try to find user by facebookId
     let user = await User.findOne({ where: { facebookId: profile.id } });
 
-    // If not found by facebookId, try email (because email is unique)
     if (!user && profile.emails?.[0]?.value) {
       user = await User.findOne({ where: { email_address: profile.emails[0].value } });
     }
 
-    // If user exists (via facebookId or email), update facebookId if not set
     if (user) {
       if (!user.facebookId) {
         user.facebookId = profile.id;
@@ -73,7 +71,7 @@ async function(accessToken, refreshToken, profile, cb) {
     user = await User.create({
       facebookId: profile.id,
       full_name: profile.displayName,
-      email_address: profile.emails?.[0]?.value || `fb_${profile.id}@facebook.com`, 
+      email_address: profile.emails?.[0]?.value || `fb_${profile.id}@facebook.com`,
       avatar: profile.photos?.[0]?.value || null
     });
 
