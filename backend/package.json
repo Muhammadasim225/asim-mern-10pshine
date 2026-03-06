@@ -30,8 +30,8 @@
     "mocha": "^11.7.4",
     "supertest": "^7.1.4"
   },
-"scripts": {
-  "test": "mocha tests --timeout 15000",
-  "test:watch": "mocha tests --watch --timeout 15000"
-}
+  "scripts": {
+    "test": "mocha tests --timeout 15000",
+    "test:watch": "mocha tests --watch --timeout 15000"
+  }
 }
