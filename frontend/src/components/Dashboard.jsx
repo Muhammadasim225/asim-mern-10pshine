@@ -86,6 +86,46 @@ useEffect(() => {
 }, [dispatch]);
 
 
+// const [isListening, setIsListening] = useState(false);
+// // const [transcript, setTranscript] = useState("");
+
+// useEffect(() => {
+//   // Check browser support
+//   if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
+//     alert("Your browser does not support Speech Recognition. Please use Chrome or Edge.");
+//   }
+// }, []);
+
+// const startListening = () => {
+//   const SpeechRecognition =
+//     window.SpeechRecognition || window.webkitSpeechRecognition;
+//   const recognition = new SpeechRecognition();
+
+//   recognition.continuous = false; // stop after one sentence
+//   recognition.interimResults = false;
+//   recognition.lang = "en-US";
+
+//   recognition.start();
+//   setIsListening(true);
+
+//   recognition.onresult = (event) => {
+//     const text = event.results[0][0].transcript;
+//     setNote(text);
+//     onTextGenerated(text); // send text to parent (like Notes editor)
+//     setIsListening(false);
+//   };
+
+//   recognition.onerror = (event) => {
+//     console.error("Speech recognition error:", event.error);
+//     setIsListening(false);
+//   };
+
+//   recognition.onend = () => {
+//     setIsListening(false);
+//   };
+// };
+
+
 useEffect(() => {
   if (!getAllNotesLoading) {
     console.log("Notes updated:", getAllNotes);
@@ -1018,6 +1058,7 @@ const editor = useEditor({
                         <path d="M20 3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H6v-2h3v2zm0-4H6v-2h3v2zm0-4H6V7h3v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"/>
                       </svg>
                     </button>
+                    
                   </div>
                 </div>
               )}
